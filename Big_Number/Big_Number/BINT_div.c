@@ -31,6 +31,22 @@ SINT make_leftshift_val(UWORD num, const BINT x, const BINT y, BINT nx, BINT ny)
 	return leftshift_val;
 }
 
+// tmp = x[i]*b^2 +x[i-1]*b+x[i-2]
+// q[i-t-1] = tmp / yt
+UWORD bint_unsigned_div_step3_1_1(const BINT x, const BINT y)
+{
+	SINT i;
+	UWORD x_arr[4],y_arr[2];
+	UWORD output;
+	for (i = 0; i < 2; ++i)
+	{
+		x_arr[i * 2    ] = x->dat[i] &  MASK_RHW;
+		x_arr[i * 2 + 1] = x->dat[i] >> BITSZ_HW;
+	}
+
+	return output;
+}
+
 ////////////////////////////////////////////////////////////////////////
 //
 // ÇÔ¼ö¸í : bisection

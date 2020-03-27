@@ -7,6 +7,6 @@ In main, you check
 2. check_mulsqr
 3. check_div
 4. check_mulinv
-5. check_montogomery
+5. check_montogomery_reduction
 
 I recommend don't use other function.

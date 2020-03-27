@@ -267,7 +267,7 @@ void check_mulinv()
 		}
 	}
 }
-void check_montgomery()
+void check_montgomery_reduction()
 {
 	BINT m,R,T,a,b,tmp1,tmp2,mr,tmp3,tmp4;
 	SINT n;
@@ -342,7 +342,7 @@ void check_montgomery()
 int main(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL)); /* use rand */
-	check_montgomery();
+	check_montgomery_reduction();
 	//check_mulsqr();
 	return 0;
 }
