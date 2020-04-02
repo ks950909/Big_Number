@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="BINT_add.c" />
     <ClCompile Include="BINT_div.c" />
+    <ClCompile Include="BINT_fastmul.c" />
     <ClCompile Include="BINT_montgomery.c" />
     <ClCompile Include="BINT_mul.c" />
     <ClCompile Include="BINT_shift.c" />
