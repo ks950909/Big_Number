@@ -342,7 +342,7 @@ void check_montgomery_reduction()
 int main(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL)); /* use rand */
-	check_montgomery_reduction();
+	//check_montgomery_reduction();
 	//check_mulsqr();
 	return 0;
 }

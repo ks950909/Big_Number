@@ -26,7 +26,6 @@ void bint_unsigned_makelen(BINT out)
 	{
 		out->sig = ZERO_SIG;
 	}
-	else out->sig = POS_SIG;
 	//
 }
 

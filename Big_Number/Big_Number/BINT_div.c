@@ -258,6 +258,10 @@ void bint_unsigned_div(BINT out1, BINT out2, const BINT x, const BINT y)
 	// 제한사항 체크
 	assert(x->len > 0); assert(y->len > 0);
 
+	// 초기 부호 양수
+	out1->sig = POS_SIG;
+	out2->sig = POS_SIG;
+
 	// |y| 와 |x|의 크기비교
 	compare_tmp = bint_unsigned_compare(x, y);
 	// |y| > |x| 라면 out1 = 0 , out2 = x 설정후 리턴
