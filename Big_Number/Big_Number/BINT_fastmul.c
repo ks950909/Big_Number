@@ -1,4 +1,12 @@
 #include "BINT.h"
+#include <stdlib.h>
+
+
+void bint_fastmul_add(BINT out, const BINT x, const BINT y)
+{
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -12,8 +20,7 @@
 ////////////////////////////////////////////////////////////////////////
 void bint_fast_unsigned_mul(BINT out, const BINT x, const BINT y)
 {
-	// 제한사항 체크 
-	assert(x->len > 0); assert(y->len > 0);
-
+	SINT len = max(x->len, y->len);
+	SINT half = len / 2;
 
 }
