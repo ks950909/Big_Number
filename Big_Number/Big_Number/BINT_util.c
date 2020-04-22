@@ -146,7 +146,7 @@ void uword2bint(BINT n, const UWORD x)
 	// dat[0]에 x대입
 	n->dat[0] = x;
 	// 부호는 0 또는 양수
-	n->sig = x == 0 ? ZERO_SIG : POS_SIG;
+	n->sig = (x == 0) ? ZERO_SIG : POS_SIG;
 }
 
 ////////////////////////////////////////////////////////////////////////

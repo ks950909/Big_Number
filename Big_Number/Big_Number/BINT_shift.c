@@ -54,6 +54,7 @@ void bint_leftshift(BINT out, const BINT x, const SINT y)
 	assert(y >= 0); assert(x->len > 0);
 	// out의 최대 길이 = x->len + ydiv + 1
 	makebint_zero((*tmp), x->len + ydiv + 1);
+	(*tmp)->sig = x->sig;
 	for (i = x->len - 1; i >= 0; --i)
 	{
 		// 겹치지 않게 더해져서 자리올림 걱정 안해도 됨
@@ -102,6 +103,7 @@ void bint_rightshift(BINT out, const BINT x, const SINT y)
 
 	// out의 최대 길이 = x->len - ydiv
 	makebint_zero((*tmp), x->len - ydiv);
+	(*tmp)->sig = x->sig;
 	// ymod == 0
 	if (ymod == 0)
 	{

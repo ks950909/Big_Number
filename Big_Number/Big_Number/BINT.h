@@ -119,7 +119,9 @@ void bint_rightshift(BINT out, const BINT x, const SINT y);
 
 /* Montgomery reduction*/
 
+void bint_classical_modular_multiplication(BINT out, const BINT m, const BINT x, const BINT y);
 UWORD UWORD_inv(UWORD x);
-void bint_montgomery_reduction(BINT out, const BINT m, const BINT T);
+void bint_montgomery_reduction(BINT out, const BINT m, const BINT T,const UWORD minv);
+void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x, const BINT y, const UWORD minv);
 
 #endif
