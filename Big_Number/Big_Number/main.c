@@ -272,7 +272,7 @@ void check_montgomery_reduction()
 	BINT m,R,T,a,b,tmp1,tmp2,mr,tmp3,tmp4;
 	SINT n;
 	SINT cnt = 0;
-	SINT maxlength = 30;
+	SINT maxlength = 3;
 
 	//a = q * b + r , (0 <= r < |b| )
 	while (cnt < 10000000)
@@ -303,15 +303,26 @@ void check_montgomery_reduction()
 		}
 		T->sig = POS_SIG;
 		bint_mul(mr, m, R);
-		//print("mr", mr);
+
 		if (bint_compare(T, mr) >= 0)continue;
 
+		UWORD minv = -UWORD_inv(m->dat[0]);
 
-		bint_montgomery_reduction(a, m, T);
+		bint_montgomery_reduction(a, m, T, minv);
+		/*
+		printf("minv : %08x\n", minv);
+		print("m", m);
+		print("T", T);
+		printf("n : %d\n", n);
+		print("a", a);
+		*/
 
 		bint_mul(b, a, R);
 		bint_div(tmp1, tmp2, b, m);
 		bint_div(tmp3, tmp4, T, m);
+
+		//print("tmp2", tmp2);
+		//print("tmp4", tmp4);
 
 		if (bint_compare(tmp2,tmp4) != ZERO_SIG )
 		{
@@ -322,8 +333,8 @@ void check_montgomery_reduction()
 			print("output * r", b);
 			print("output * r / m", tmp1);
 			print("output * r % m", tmp2);
-			print("output * t / m", tmp3);
-			print("output * t % m", tmp4);
+			print("T / m", tmp3);
+			print("T % m", tmp4);
 			break;
 		}
 		delbint(a);
@@ -339,10 +350,107 @@ void check_montgomery_reduction()
 
 }
 
+void check_montgomery_multiplication()
+{
+	BINT m,R,x,y,a,b,tmp1,tmp2,mr,tmp3,tmp4,xy;
+	SINT n;
+	SINT cnt = 0;
+	SINT maxlength = 3;
+
+	while (cnt < 10000000)
+	{
+		if (((cnt++) & 0xffff) == 0)
+			printf("cnt : %d\n", cnt);
+		//printf("cnt : %d\n", cnt);
+
+		makerandomBINT(m, maxlength);
+		n = m->len;
+
+		if (m->sig == 0)continue;
+
+		m->sig = POS_SIG;
+		if ((m->dat[0] & 1u) == 0)m->dat[0]++;
+
+		uword2bint(R, 1u);
+		bint_leftshift(R, R, BITSZ_WW * n);
+
+		makebint(x, n);
+		makebint(y, n);
+		for (SINT i = 0; i < n; i++)
+		{
+			x->dat[i] = makerandom();
+			y->dat[i] = makerandom();
+		}
+		x->sig = POS_SIG;
+		y->sig = POS_SIG;
+		bint_mul(mr, m, R);
+
+		//if (bint_compare(T, mr) >= 0)continue;
+
+		UWORD minv = -UWORD_inv(m->dat[0]);
+
+		bint_montgomery_multiplication(a, m, x, y, minv);
+		/*
+		printf("minv : %08x\n", minv);
+		print("m", m);
+		print("T", T);
+		printf("n : %d\n", n);
+		print("a", a);
+		*/
+
+		bint_mul(b, a, R);
+		bint_mul(xy, x, y);
+		bint_div(tmp1, tmp2, b, m);
+		bint_div(tmp3, tmp4, xy, m);
+
+		//print("tmp2", tmp2);
+		//print("tmp4", tmp4);
+
+		if (bint_compare(tmp2,tmp4) != ZERO_SIG )
+		{
+			print("m", m);
+			print("x", x);
+			print("y", y);
+			print("R", R);
+			print("xy", xy);
+			print("output", a);
+			print("output * r", b);
+			print("output * r / m", tmp1);
+			print("output * r % m", tmp2);
+			print("xy / m", tmp3);
+			print("xy % m", tmp4);
+			break;
+		}
+		delbint(a);
+		delbint(b);
+		delbint(m);
+		delbint(x);
+		delbint(y);
+		delbint(xy);
+		delbint(tmp1);
+		delbint(tmp2);
+		delbint(tmp3);
+		delbint(tmp4);
+	}
+	if (cnt == 10000000) puts("All testcase Good!");
+
+}
+
+void check_time_div_montogomeryreduction()
+{
+	BINT T_bint_arr[1000];
+	BINT m_bint_arr[1000];
+	for (int i = 0; i < 1000; i++)
+	{
+	}
+}
+
 int main(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL)); /* use rand */
-	//check_montgomery_reduction();
+	check_montgomery_reduction();
+	//check_montgomery_multiplication();
 	//check_mulsqr();
+	//check_mulinv();
 	return 0;
 }
