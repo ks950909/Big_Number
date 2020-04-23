@@ -468,6 +468,7 @@ void check_montgomery_multiplication()
 
 }
 
+
 clock_t elapsed;
 float sec;
  
@@ -694,11 +695,13 @@ void check_time_div_montgomeryreduction_montgomerymultiplicatoin()
 		}
 	}
 	printf("All test same results\n");
+
 }
 
 int main(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL)); /* use rand */
+
 	//check_montgomery_reduction();
 	//check_montgomery_multiplication();
 	//check_mulsqr();
@@ -706,5 +709,6 @@ int main(int argc, char** argv)
 	//check_time_div_montgomeryreduction();
 	check_time_div_montgomeryreduction_montgomerymultiplicatoin();
 	//onetest();
+
 	return 0;
 }
