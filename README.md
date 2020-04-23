@@ -9,4 +9,7 @@ In main, you check
 4. check_mulinv
 5. check_montogomery_reduction
 6. check_montogomery_multiplication
+7. check_time_div_montgomeryreduction
+8. check_time_div_montgomeryreduction_montgomerymultiplicatoin
+
 I recommend don't use other function.
