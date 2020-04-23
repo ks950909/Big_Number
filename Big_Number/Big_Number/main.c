@@ -584,7 +584,7 @@ void check_time_div_montgomeryreduction_montgomerymultiplicatoin()
 	BINT *out_bint_arr;
 	BINT *out1_bint_arr;
 	BINT *out2_bint_arr;
-	const SINT testsize = 5000;
+	const SINT testsize = 10000;
 	x_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
 	y_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
 	out_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
@@ -703,8 +703,8 @@ int main(int argc, char** argv)
 	//check_montgomery_multiplication();
 	//check_mulsqr();
 	//check_mulinv();
-	check_time_div_montgomeryreduction();
-	//check_time_div_montgomeryreduction_montgomerymultiplicatoin();
+	//check_time_div_montgomeryreduction();
+	check_time_div_montgomeryreduction_montgomerymultiplicatoin();
 	//onetest();
 	return 0;
 }

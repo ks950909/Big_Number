@@ -29,7 +29,7 @@ void bint_classical_modular_multiplication(BINT out, const BINT m, const BINT x,
 // 기  능 : a ^ -1 (mod b)
 // 인  자 : UWORD a
 // 리턴값 : 없음
-// 제한 사항 : x,y 길이 > 0, x,y > 0
+// 제한 사항 : a 는 홀수
 //
 ////////////////////////////////////////////////////////////////////////
 UWORD UWORD_inv(UWORD a)
@@ -149,6 +149,7 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 		u->dat[0] = ((*tmp)->dat[0] + x->dat[i] * y->dat[0]) * mp;
 		// xi <- x_i
 		xi->dat[0] = x->dat[i];
+
 		// tmpval <- m * u_i
 		bint_mul(tmpval, m, u);
 		// tmp2val <- y * x_i
@@ -158,14 +159,15 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 		bint_add((*tmp), (*tmp), tmp2val);
 		// A <- A / b
 		bint_rightshift((*tmp), (*tmp), BITSZ_WW);
+
 		// 중간 메모리 해제
 		delbint(tmpval);
 		delbint(tmp2val);
 	}
-	// A 최종길이 정하기
-	bint_unsigned_makelen(*tmp);
 	// if A >= m then A <- A - m 
 	if (bint_compare((*tmp), m) >= 0) bint_sub((*tmp), (*tmp), m);
+	// A 최종길이 정하기
+	bint_unsigned_makelen(*tmp);
 	// 사용한 메모리 해제
 	delbint(u);
 	// 같은 곳을 가르킨다면 복사 후 사용한 메모리 해제
