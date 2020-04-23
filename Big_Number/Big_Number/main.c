@@ -38,6 +38,19 @@ void makerandomBINT(BINT x, SINT maxlength)
 	}
 	else x->sig = i <= 1000 ? POS_SIG : NEG_SIG;
 }
+void makerandomBINT_fix(BINT x, SINT length)
+{
+	SINT i;
+	x->len = length;
+	makebint(x, x->len);
+	x->sig = 1;
+	for (i = 0; i < x->len; ++i)
+	{
+		x->dat[i] = makerandom();
+	}
+	bint_unsigned_makelen(x);
+	x->sig = POS_SIG;
+}
 void file2bint(const char filename[], const char filemode[], BINT n)
 {
 	FILE* f;
@@ -227,27 +240,47 @@ void check_div()
 void onetest()
 {
 	//one test
-	BINT a, b, c, d;
-	UWORD a_arr[11] = { 0xf,0x01 };
+	BINT M,Rinv;
+	UWORD M_arr[33] = {0x616B52B7 ,0xBEC18FFD ,0x28D3166A ,0xEEE3B067 ,
+                  0x0827ABBF ,0x1FE6BFFC ,0x279DECDD ,0x3B5FF0DA ,
+                  0x7945EA76 ,0xB09FF817 ,0x3F4C599A ,0x57256C9A ,
+                  0x377C1B96 ,0x07EFCC36 ,0x47E66E7F ,0x2D55CC39 ,
+                  0xC7E2E48C ,0x7AD9F24A ,0x5B2E13FE ,0x6C47CA03 ,
+                  0xCD72D203 ,0x631ED5DB ,0x18471F09 ,0xC0A6D4E4 ,
+                  0x31CB4500 ,0x019D3848 ,0xFE4E80FB ,0xF95F7D71 ,
+                  0xE36C0B5F ,0xB8DDCD1C ,0x0BEFDD5A ,0x9083F615 };
+	UWORD Rinv_arr[33] = {0xa1083f8c,0x8c802575,0x21e8c263,0xbbd59864,
+		0xfbe160f5,0x8a79b9af,0x266ef4ef,0x2d1a7038,
+		0xcd31960,0x25d0a3cb,0x17590436,0x7145cb91,
+		0xf0649e66,0x90364411,0xbc3494e7,0x6c6fc100,
+		0x49e8e947,0x9beb5b08,0x5d9f4a1f,0xdedba528,
+		0xa979c6db,0x1f5b8a5c,0x7918d4e8,0xc8c0fd00,
+		0x454e1f3e,0xa43b6b27,0x5121a3f1,0x9fd68dda,
+		0xb4ac4b38,0x1fbd55c4,0x7c5a5165,0x55056db2};
+	UWORD mp = 0x71cbd4f9;
 	UWORD b_arr[11] = { 0xfffffff,0x00000001 };
-	a->len = 1; b->len = 1;
-	uwordarr2bint(a, a_arr, a->len, -1);
-	uwordarr2bint(b, b_arr, b->len, 1);
-	//bint_unsigned_makelen(a);
-	//bint_unsigned_makelen(b);
+	uwordarr2bint(M, M_arr, 32, POS_SIG);
+	uwordarr2bint(Rinv, Rinv_arr, 32, POS_SIG);
+	BINT tmp1, tmp2, tmp3, R,T,out;
+	makebint(T, 64);
+	for (int i = 1; i < 64; i++)
+	{
+		T->dat[i] = 0;
+	}
+	T->dat[0] = 1;
+	T->sig = POS_SIG;
 
-	bint_div(c, d, a, b);
+	uword2bint(R, 0x1);
+	bint_leftshift(R, R, 32 * 32);
+	bint_mul(tmp1,R, Rinv);
+	bint_div(tmp2, tmp3, tmp1, M);
+	bint_montgomery_reduction(out, M, T, mp);
 
-	print("a", a);
-	print("b", b);
+	print("tmp3", tmp3);
 
-	puts("");
-	puts("a = b * c + d");
-	puts("");
-
-	print("c", c);
-	puts("");
-	print("d", d);
+	print("M", M);
+	printf("mp %08x\n", -UWORD_inv(M_arr[0]));
+	print("out", out);
 }
 void check_mulinv()
 {
@@ -435,12 +468,243 @@ void check_montgomery_multiplication()
 
 }
 
+clock_t elapsed;
+float sec;
+ 
+#define START_WATCH \
+{\
+ elapsed = -clock(); \
+}\
+ 
+#define STOP_WATCH \
+{\
+ elapsed += clock();\
+ sec = (float)elapsed/CLOCKS_PER_SEC;\
+}\
+ 
+#define PRINT_TIME(qstr) \
+{\
+ printf("\n[%s: %.10f s]\n",qstr,sec);\
+}\
+
+
+void check_time_div_montgomeryreduction()
+{
+	BINT *T_bint_arr;
+	const SINT testsize = 10000;
+	T_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
+
+	BINT M,Rinv,R;
+	UWORD M_arr[33] = {0x616B52B7 ,0xBEC18FFD ,0x28D3166A ,0xEEE3B067 ,
+                  0x0827ABBF ,0x1FE6BFFC ,0x279DECDD ,0x3B5FF0DA ,
+                  0x7945EA76 ,0xB09FF817 ,0x3F4C599A ,0x57256C9A ,
+                  0x377C1B96 ,0x07EFCC36 ,0x47E66E7F ,0x2D55CC39 ,
+                  0xC7E2E48C ,0x7AD9F24A ,0x5B2E13FE ,0x6C47CA03 ,
+                  0xCD72D203 ,0x631ED5DB ,0x18471F09 ,0xC0A6D4E4 ,
+                  0x31CB4500 ,0x019D3848 ,0xFE4E80FB ,0xF95F7D71 ,
+                  0xE36C0B5F ,0xB8DDCD1C ,0x0BEFDD5A ,0x9083F615 };
+	UWORD Rinv_arr[33] = {0xa1083f8c,0x8c802575,0x21e8c263,0xbbd59864,
+		0xfbe160f5,0x8a79b9af,0x266ef4ef,0x2d1a7038,
+		0xcd31960,0x25d0a3cb,0x17590436,0x7145cb91,
+		0xf0649e66,0x90364411,0xbc3494e7,0x6c6fc100,
+		0x49e8e947,0x9beb5b08,0x5d9f4a1f,0xdedba528,
+		0xa979c6db,0x1f5b8a5c,0x7918d4e8,0xc8c0fd00,
+		0x454e1f3e,0xa43b6b27,0x5121a3f1,0x9fd68dda,
+		0xb4ac4b38,0x1fbd55c4,0x7c5a5165,0x55056db2};
+	UWORD mp = 0x71cbd4f9;
+
+	uwordarr2bint(M, M_arr, 32, POS_SIG);
+	uwordarr2bint(Rinv, Rinv_arr, 32, POS_SIG);
+	uword2bint(R, 0x1);
+	bint_leftshift(R, R, 32 * 32);
+	SINT n = 32;
+	BINT mr;
+	bint_mul(mr, M, R);
+
+	for (int i = 0; i < testsize; i++)
+	{
+		TORF flag = TRUE;
+		while (flag)
+		{
+			makerandomBINT_fix(T_bint_arr[i], 2*n);
+			if (bint_compare(T_bint_arr[i],mr)< 0)
+			{
+				flag = FALSE;
+			}
+		}
+	}
+	puts("make fin");
+	// div
+	BINT out,out1,out2;
+
+	START_WATCH
+
+	for (int i = 0; i < testsize; i++)
+	{
+		bint_classical_modular_multiplication(out, M, T_bint_arr[i], Rinv);
+	}
+	STOP_WATCH
+
+	PRINT_TIME("div")
+
+	// montgomery reduction
+
+	START_WATCH
+
+	for (int i = 0; i < testsize; i++)
+	{
+		bint_montgomery_reduction(out, M, T_bint_arr[i], mp);
+	}
+
+	STOP_WATCH
+
+	PRINT_TIME("montgomery reduction")
+
+	// montgomery multiplication
+
+		/*
+
+	START_WATCH
+
+	for (int i = 0; i < testsize; i++)
+	{
+	}
+
+	STOP_WATCH
+
+	PRINT_TIME("montgomery multiplication")
+	*/
+
+}
+
+void check_time_div_montgomeryreduction_montgomerymultiplicatoin()
+{
+	BINT *x_bint_arr;
+	BINT *y_bint_arr;
+	BINT *out_bint_arr;
+	BINT *out1_bint_arr;
+	BINT *out2_bint_arr;
+	const SINT testsize = 5000;
+	x_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
+	y_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
+	out_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
+	out1_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
+	out2_bint_arr = (BINT*)malloc(testsize * sizeof(BINT));
+
+	BINT M,Rinv,R;
+	UWORD M_arr[33] = {0x616B52B7 ,0xBEC18FFD ,0x28D3166A ,0xEEE3B067 ,
+                  0x0827ABBF ,0x1FE6BFFC ,0x279DECDD ,0x3B5FF0DA ,
+                  0x7945EA76 ,0xB09FF817 ,0x3F4C599A ,0x57256C9A ,
+                  0x377C1B96 ,0x07EFCC36 ,0x47E66E7F ,0x2D55CC39 ,
+                  0xC7E2E48C ,0x7AD9F24A ,0x5B2E13FE ,0x6C47CA03 ,
+                  0xCD72D203 ,0x631ED5DB ,0x18471F09 ,0xC0A6D4E4 ,
+                  0x31CB4500 ,0x019D3848 ,0xFE4E80FB ,0xF95F7D71 ,
+                  0xE36C0B5F ,0xB8DDCD1C ,0x0BEFDD5A ,0x9083F615 };
+	UWORD Rinv_arr[33] = {0xa1083f8c,0x8c802575,0x21e8c263,0xbbd59864,
+		0xfbe160f5,0x8a79b9af,0x266ef4ef,0x2d1a7038,
+		0xcd31960,0x25d0a3cb,0x17590436,0x7145cb91,
+		0xf0649e66,0x90364411,0xbc3494e7,0x6c6fc100,
+		0x49e8e947,0x9beb5b08,0x5d9f4a1f,0xdedba528,
+		0xa979c6db,0x1f5b8a5c,0x7918d4e8,0xc8c0fd00,
+		0x454e1f3e,0xa43b6b27,0x5121a3f1,0x9fd68dda,
+		0xb4ac4b38,0x1fbd55c4,0x7c5a5165,0x55056db2};
+	UWORD mp = 0x71cbd4f9;
+
+	uwordarr2bint(M, M_arr, 32, POS_SIG);
+	uwordarr2bint(Rinv, Rinv_arr, 32, POS_SIG);
+	uword2bint(R, 0x1);
+	bint_leftshift(R, R, 32 * 32);
+	SINT n = 32;
+	BINT mr;
+	bint_mul(mr, M, R);
+
+	for (int i = 0; i < testsize; i++)
+	{
+		TORF flag = TRUE;
+		while (flag)
+		{
+			makerandomBINT_fix(x_bint_arr[i], n);
+			if (bint_compare(x_bint_arr[i],M)< 0)
+			{
+				flag = FALSE;
+			}
+		}
+		flag = TRUE;
+		while (flag)
+		{
+			makerandomBINT_fix(y_bint_arr[i], n);
+			if (bint_compare(y_bint_arr[i],M)< 0)
+			{
+				flag = FALSE;
+			}
+		}
+	}
+	puts("make fin");
+	BINT out,out1,out2;
+	// div
+
+	START_WATCH
+
+	for (int i = 0; i < testsize; i++)
+	{
+		bint_mul(out, x_bint_arr[i], y_bint_arr[i]);
+		bint_classical_modular_multiplication(out_bint_arr[i], M, out, Rinv);
+	}
+	STOP_WATCH
+
+	PRINT_TIME("div")
+
+	// montgomery reduction
+
+	START_WATCH
+
+	for (int i = 0; i < testsize; i++)
+	{
+		bint_mul(out, x_bint_arr[i], y_bint_arr[i]);
+		bint_montgomery_reduction(out1_bint_arr[i], M, out, mp);
+	}
+
+	STOP_WATCH
+
+	PRINT_TIME("montgomery reduction")
+
+	// montgomery multiplication
+
+
+	START_WATCH
+
+	for (int i = 0; i < testsize; i++)
+	{
+		bint_montgomery_multiplication(out2_bint_arr[i], M, x_bint_arr[i], y_bint_arr[i], mp);
+	}
+
+	STOP_WATCH
+
+	PRINT_TIME("montgomery multiplication")
+
+	for (int i = 0; i < testsize; i++)
+	{
+		if (bint_compare(out_bint_arr[i], out1_bint_arr[i]) != 0 || bint_compare(out_bint_arr[i],out2_bint_arr[i]) != 0)
+		{
+			printf("%d error", i);
+			print("", out_bint_arr[i]);
+			print("", out1_bint_arr[i]);
+			print("", out2_bint_arr[i]);
+			return;
+		}
+	}
+	printf("All test same results\n");
+}
+
 int main(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL)); /* use rand */
-	check_montgomery_reduction();
+	//check_montgomery_reduction();
 	//check_montgomery_multiplication();
 	//check_mulsqr();
 	//check_mulinv();
+	check_time_div_montgomeryreduction();
+	//check_time_div_montgomeryreduction_montgomerymultiplicatoin();
+	//onetest();
 	return 0;
 }

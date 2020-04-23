@@ -12,13 +12,13 @@
 void bint_classical_modular_multiplication(BINT out, const BINT m, const BINT x, const BINT y)
 {
 	// 몫을 저장하기 위한 공간
-	BINT tmp;
+	BINT tmp,tmp1;
 	// 제한사항 체크
 	assert(x->sig == POS_SIG); assert(y->sig == POS_SIG); assert(x->len > 0); assert(y->len > 0);
 	// x * y 계산
-	bint_mul(out, x, y);
+	bint_mul(tmp, x, y);
 	// (x * y) / m 계산 , 몫 : tmp , 나머지 : out
-	bint_div(tmp, out, out, m);
+	bint_div(tmp1, out, tmp, m);
 	// 필요없는 몫 메모리 해제
 	delbint(tmp);
 }
@@ -95,7 +95,7 @@ void bint_montgomery_reduction(BINT out, const BINT m, const BINT T,const UWORD 
 	}
 	// A <- A / b^n
 	bint_rightshift((*tmp), (*tmp), BITSZ_WW * n);
-	// A >= m -> A <- A - m
+	// if A >= m ,then A <- A - m
 	if (bint_compare((*tmp), m) >= 0) bint_sub((*tmp), (*tmp), m);
 	// A 최종길이 정하기
 	bint_unsigned_makelen(*tmp);
@@ -120,7 +120,7 @@ void bint_montgomery_reduction(BINT out, const BINT m, const BINT T,const UWORD 
 // 제한 사항 : m * minv == -1 (mod b) , m의 길이 = x의길이 = y의길이
 //
 ////////////////////////////////////////////////////////////////////////
-void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const BINT y,const UWORD minv)
+void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const BINT y,const UWORD mp)
 {
 	SINT i;
 	// m 의 길이
@@ -128,7 +128,7 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 	// 중간값 정리
 	BINT u,xi,tmpval,tmp2val;
 	// 제한 사항 체크
-	assert(m->dat[0] * minv == MASK_WW); assert(m->len == x->len);assert(m->len == y->len);
+	assert(m->dat[0] * mp == MASK_WW); assert(m->len == x->len);assert(m->len == y->len);
 	// out 이 x,y와 가르키는 곳이 같은지 체크
 	SINT eq = (out == x || out == y || out == m) ? TRUE : FALSE;
 	// 주소값이 같을때를 대비
@@ -146,14 +146,14 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 	for (i = 0; i < n; i++)
 	{
 		// u_i <- (a_0 + x_i * y_0) * m' (mod b)
-		u->dat[0] = ((*tmp)->dat[0] + x->dat[i] * y->dat[0]) * minv;
+		u->dat[0] = ((*tmp)->dat[0] + x->dat[i] * y->dat[0]) * mp;
 		// xi <- x_i
 		xi->dat[0] = x->dat[i];
 		// tmpval <- m * u_i
 		bint_mul(tmpval, m, u);
 		// tmp2val <- y * x_i
 		bint_mul(tmp2val, xi, y);
-		// A <- A + tmpval + tmp2val
+		// A <- A + m * u_i + y * x_i 
 		bint_add((*tmp), (*tmp), tmpval);
 		bint_add((*tmp), (*tmp), tmp2val);
 		// A <- A / b
@@ -164,7 +164,7 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 	}
 	// A 최종길이 정하기
 	bint_unsigned_makelen(*tmp);
-	// A >= m -> A <- A - m 
+	// if A >= m then A <- A - m 
 	if (bint_compare((*tmp), m) >= 0) bint_sub((*tmp), (*tmp), m);
 	// 사용한 메모리 해제
 	delbint(u);

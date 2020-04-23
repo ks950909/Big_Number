@@ -37,7 +37,7 @@ UWORD bint_unsigned_div_step3_1_1(const BINT x, const BINT y)
 {
 	SINT i;
 	UWORD x_arr[4],y_arr[2];
-	UWORD output;
+	UWORD output = 0u;
 	for (i = 0; i < 2; ++i)
 	{
 		x_arr[i * 2    ] = x->dat[i] &  MASK_RHW;
