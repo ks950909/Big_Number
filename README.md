@@ -11,5 +11,12 @@ In main, you check
 6. check_montogomery_multiplication
 7. check_time_div_montgomeryreduction
 8. check_time_div_montgomeryreduction_montgomerymultiplicatoin
+9. check_exp
+10.exp_time
+11.kary_time
+12.kary_modify_time
+13.slidingwindow_time
+14.montgomery_time
+15.wordsize_time
 
 I recommend don't use other function.
