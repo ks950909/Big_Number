@@ -21,6 +21,7 @@ void bint_classical_modular_multiplication(BINT out, const BINT m, const BINT x,
 	bint_div(tmp1, out, tmp, m);
 	// 필요없는 몫 메모리 해제
 	delbint(tmp);
+	delbint(tmp1);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -65,7 +66,7 @@ void bint_montgomery_reduction(BINT out, const BINT m, const BINT T,const UWORD 
 	// 중간 값 저장
 	BINT u,tmpval;
 	// 제한 사항 체크
-	assert(m->dat[0] * mp == MASK_WW); assert(m->len * 2 == T->len);
+	assert(m->dat[0] * mp == MASK_WW); 
 	// out 이 x,y와 가르키는 곳이 같은지 체크
 	SINT eq = (out == m || out == T) ? TRUE : FALSE;
 	// 주소값이 같을때를 대비
@@ -83,7 +84,7 @@ void bint_montgomery_reduction(BINT out, const BINT m, const BINT T,const UWORD 
 	for (i = 0; i < n; i++)
 	{
 		// u_i <- a_i * m' mod b
-		u->dat[0] = (*tmp)->dat[i] * mp;
+		u->dat[0] = ((*tmp)->len > i ? (*tmp)->dat[i]:0) * mp;
 		// tmpval <- u_i * m
 		bint_mul(tmpval, m, u);
 		// tmpval <- u_i * m * b^i
@@ -128,7 +129,7 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 	// 중간값 정리
 	BINT u,xi,tmpval,tmp2val;
 	// 제한 사항 체크
-	assert(m->dat[0] * mp == MASK_WW); assert(m->len == x->len);assert(m->len == y->len);
+	assert(m->dat[0] * mp == MASK_WW); 
 	// out 이 x,y와 가르키는 곳이 같은지 체크
 	SINT eq = (out == x || out == y || out == m) ? TRUE : FALSE;
 	// 주소값이 같을때를 대비
@@ -146,9 +147,9 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 	for (i = 0; i < n; i++)
 	{
 		// u_i <- (a_0 + x_i * y_0) * m' (mod b)
-		u->dat[0] = ((*tmp)->dat[0] + x->dat[i] * y->dat[0]) * mp;
+		u->dat[0] = ((*tmp)->dat[0] + (x->len > i ? x->dat[i] : 0) * y->dat[0]) * mp;
 		// xi <- x_i
-		xi->dat[0] = x->dat[i];
+		xi->dat[0] = (x->len > i ? x->dat[i] : 0);
 
 		// tmpval <- m * u_i
 		bint_mul(tmpval, m, u);
@@ -178,4 +179,91 @@ void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x,const B
 		delbint((*tmp));
 		free(tmp);
 	}
+}
+
+void makeconst_montgomery()
+{
+	UWORD M_arr[33] = {0x616B52B7 ,0xBEC18FFD ,0x28D3166A ,0xEEE3B067 ,
+                  0x0827ABBF ,0x1FE6BFFC ,0x279DECDD ,0x3B5FF0DA ,
+                  0x7945EA76 ,0xB09FF817 ,0x3F4C599A ,0x57256C9A ,
+                  0x377C1B96 ,0x07EFCC36 ,0x47E66E7F ,0x2D55CC39 ,
+                  0xC7E2E48C ,0x7AD9F24A ,0x5B2E13FE ,0x6C47CA03 ,
+                  0xCD72D203 ,0x631ED5DB ,0x18471F09 ,0xC0A6D4E4 ,
+                  0x31CB4500 ,0x019D3848 ,0xFE4E80FB ,0xF95F7D71 ,
+                  0xE36C0B5F ,0xB8DDCD1C ,0x0BEFDD5A ,0x9083F615 };
+	MP_montgomery = 0x71cbd4f9;
+	uwordarr2bint(M_montgomery, M_arr, 32, POS_SIG);
+}
+
+void bint_mul_reduction_classical(BINT out,const BINT m,const BINT x,const BINT y)
+{
+	// out 이 x,y와 가르키는 곳이 같은지 체크
+	SINT eq = (out == x || out == y || out == m) ? TRUE : FALSE;
+	// 주소값이 같을때를 대비
+	BINT* tmp;
+	// out값을 바꾸어도 x,y값의 변화가 없음
+	if (eq == FALSE) tmp = out;
+	// out값을 바꾸면 x,y값의 변화가 생기므로 동적할당
+	else  tmp = (BINT*)malloc(sizeof(BINT));
+	BINT ttmp,tttmp;
+	bint_mul(ttmp, x, y);
+	bint_div(tttmp, (*tmp), ttmp, m);
+	delbint(ttmp);
+	delbint(tttmp);
+	// 같은 곳을 가르킨다면 복사 후 사용한 메모리 해제
+	if (eq == TRUE)
+	{
+		delbint(out);
+		bint_copy(out, (*tmp));
+		delbint((*tmp));
+		free(tmp);
+	}
+}
+
+void bint_sqr_reduction_classical(BINT out, const BINT m, const BINT x)
+{
+	// out 이 x,y와 가르키는 곳이 같은지 체크
+	SINT eq = (out == x || out == m) ? TRUE : FALSE;
+	// 주소값이 같을때를 대비
+	BINT* tmp;
+	// out값을 바꾸어도 x,y값의 변화가 없음
+	if (eq == FALSE) tmp = out;
+	// out값을 바꾸면 x,y값의 변화가 생기므로 동적할당
+	else  tmp = (BINT*)malloc(sizeof(BINT));
+	BINT ttmp;
+	bint_sqr(ttmp, x);
+	bint_div(ttmp, (*tmp), ttmp, m);
+	delbint(ttmp);
+
+	// 같은 곳을 가르킨다면 복사 후 사용한 메모리 해제
+	if (eq == TRUE)
+	{
+		delbint(out);
+		bint_copy(out, (*tmp));
+		delbint((*tmp));
+		free(tmp);
+	}
+}
+
+//5
+void bint_montmul_redmul(BINT out, const BINT m, const BINT x, const BINT y, const UWORD mp)
+{
+	BINT tmp;
+	bint_mul(tmp, x, y);
+	bint_montgomery_reduction(out, m, tmp, mp);
+	delbint(tmp);
+}
+//6
+void bint_montmul_redmulsqr(BINT out, const BINT m, const BINT x, const BINT y, const UWORD mp)
+{
+	BINT tmp;
+	if (x == y) bint_sqr(tmp, x);
+	else bint_mul(tmp, x, y);
+	bint_montgomery_reduction(out, m, tmp, mp);
+	delbint(tmp);
+}
+//7
+void bint_montmul_montmul(BINT out, const BINT m, const BINT x, const BINT y, const UWORD mp)
+{
+	bint_montgomery_multiplication(out, m, x, y, mp);
 }

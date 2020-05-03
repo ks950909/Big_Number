@@ -105,8 +105,6 @@ void makebint(BINT n, const SINT size)
 	assert(size > 0);
 	// size 만큼 동적할당
 	n->dat = (UWORD*)malloc(size * sizeof(UWORD));
-	// 0으로 초기화 하므로 0
-	n->sig = ZERO_SIG;
 	// 길이는 size로 함
 	n->len = size;
 }

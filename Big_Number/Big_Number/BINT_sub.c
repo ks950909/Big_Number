@@ -49,9 +49,9 @@ void uword_sub(P_UWORD out, const UWORD x, const UWORD y, P_UWORD c)
 void uword_sub_new(P_UWORD out, const UWORD x, const UWORD y, P_UWORD c)
 {
 	*out = x - y - *c;
-	*c = (x >= y + *c) ? 0u : 1u;
+	*c = (x >= y + *c && !(y == MASK_WW && *c == 1)) ? 0u : 1u;
 }
-#define uword_sub_new2(out,x,y,c) (out)=(x)-(y)-(c);(c)=((x) >= (y) + (c)) ? 0u : 1u;
+#define uword_sub_new2(out,x,y,c) (out)=(x)-(y)-(c);(c)=(((x) >= (y) + (c))&& !((y) == MASK_WW && (c) == 1)) ? 0u : 1u;
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -108,8 +108,9 @@ void bint_unsigned_sub(BINT out, const BINT x, const BINT y)
 	for (i = 0; i < n; ++i)
 	{
 		// STEP 2.1 : (w[i] - b * c') <- x[i] - y[i] - c , c' <- c
-		//uword_sub_new(&(out->dat[i]), (x->len > i ? x->dat[i] : 0u), (y->len > i ? y->dat[i] : 0u), &c);
-		uword_sub_new2((out->dat[i]), (x->len > i ? x->dat[i] : 0u), (y->len > i ? y->dat[i] : 0u), c);
+		uword_sub_new(&(out->dat[i]), (x->len > i ? x->dat[i] : 0u), (y->len > i ? y->dat[i] : 0u), &c);
+		//uword_sub_new2((out->dat[i]), (x->len > i ? x->dat[i] : 0u), (y->len > i ? y->dat[i] : 0u), c);
+		//printf("%d : %08x,%08x,%08x %08x\n", i, (out->dat[i]),(x->len > i ? x->dat[i] : 0u) ,(y->len > i ? y->dat[i] : 0u),c );
 		//subborrow_u32(c,(x->len > i ? x->dat[i] : 0u),(y->len > i ? y->dat[i] : 0u),(out->dat[i]));
 	}
 	// STEP 3 : 최상위자리 0제거

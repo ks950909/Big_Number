@@ -31,22 +31,6 @@ SINT make_leftshift_val(UWORD num, const BINT x, const BINT y, BINT nx, BINT ny)
 	return leftshift_val;
 }
 
-// tmp = x[i]*b^2 +x[i-1]*b+x[i-2]
-// q[i-t-1] = tmp / yt
-UWORD bint_unsigned_div_step3_1_1(const BINT x, const BINT y)
-{
-	SINT i;
-	UWORD x_arr[4],y_arr[2];
-	UWORD output = 0u;
-	for (i = 0; i < 2; ++i)
-	{
-		x_arr[i * 2    ] = x->dat[i] &  MASK_RHW;
-		x_arr[i * 2 + 1] = x->dat[i] >> BITSZ_HW;
-	}
-
-	return output;
-}
-
 ////////////////////////////////////////////////////////////////////////
 //
 // 함수명 : bisection
@@ -147,6 +131,42 @@ void bint_unsigned_div_step3_1(const BINT newx, const BINT newy, BINT out1, BINT
 	out1->dat[idx - t - 1] = bisection(tmp, yt);
 }
 
+
+////////////////////////////////////////////////////////////////////////
+//
+// 함수명 : bint_unsigned_div_step3_1_new
+// 기  능 :
+// 인  자 : const BINT newx,const BINT newy, BINT out1, BINT tmp,BINT yt, CONST SINT idx,CONST SINT t
+// 리턴값 : 없음
+// 제한 사항 : bint_unsigned_div에서만 쓰기
+//
+////////////////////////////////////////////////////////////////////////
+void bint_unsigned_div_step3_1_new(const BINT newx, const BINT newy, BINT out1, BINT tmp, const BINT yt, const SINT idx, const SINT t)
+{
+	// tmp = x[i]*b^2 +x[i-1]*b+x[i-2]
+	tmp->dat[0] = idx == 1 ? 0u : newx->dat[idx - 2];
+	tmp->dat[1] = newx->dat[idx - 1];
+	tmp->dat[2] = newx->dat[idx];
+	BINT tmpq,midval;
+	UINT64 longval = newx->dat[idx];
+	longval <<= BITSZ_WW;
+	longval += newx->dat[idx - 1];
+	if (newx->dat[idx] == newy->dat[t]) out1->dat[idx - t - 1] = MASK_WW;
+	else out1->dat[idx - t - 1] = (UWORD)(longval / (UINT64)newy->dat[t]);
+	//printf("%d mid1 : %08x\n", idx, out1->dat[idx - t - 1]);
+	//printf("%016llx %08x\n", longval, newy->dat[t]);
+	uword2bint(tmpq, out1->dat[idx-t-1]);
+	bint_mul(midval, tmpq, yt);
+	while (bint_compare(midval,tmp) > 0)
+	{
+		bint_sub(midval,midval, yt);
+		out1->dat[idx - t - 1]--;
+	}
+	//printf("%d out1 : %08x\n", idx, out1->dat[idx - t - 1]);
+	delbint(tmpq);
+	delbint(midval);
+}
+
 ////////////////////////////////////////////////////////////////////////
 //
 // 함수명 : bint_unsigned_div_step3_3
@@ -170,7 +190,10 @@ void bint_unsigned_div_step3_3(BINT newx, const BINT newy, BINT out1, const SINT
 	bint_mul(tmpy2, tmpy1, tmpy3);
 
 	// x와 tmpy2비교
+	//print("newx", newx);
+	//print("tmpy2", tmpy2);
 	compare_tmp = bint_unsigned_compare(newx, tmpy2);
+	//printf("compare : %d\n", compare_tmp);
 	// x < tmpy2
 	if (compare_tmp < 0)
 	{
@@ -181,6 +204,7 @@ void bint_unsigned_div_step3_3(BINT newx, const BINT newy, BINT out1, const SINT
 
 	// x -= tmpy2
 	bint_sub(newx, newx, tmpy2);
+	//print("newx", newx);
 
 	// 메모리 해제
 	delbint(tmpy1);
@@ -281,14 +305,21 @@ void bint_unsigned_div(BINT out1, BINT out2, const BINT x, const BINT y)
 	// 동적 할당
 	bint_unsigned_div_makesubarr(out1, tmp, yt, newy, n, t);
 
+	//print("newx", newx);
+	//print("newy", newy);
 	// STEP 2 :
 	bint_unsigned_div_step2(out1, newx, newy, n - t);
+
+	//print("s2 = newx", newx);
+	//print("s2 = out1", out1);
 
 	// STEP 3 :
 	for (i = n; i > t; --i)
 	{
+		//printf("i : %d\n", i);
 		// STEP 3.1 , 3.2
-		bint_unsigned_div_step3_1(newx, newy, out1, tmp, yt, i, t);
+		bint_unsigned_div_step3_1_new(newx, newy, out1, tmp, yt, i, t);
+		//bint_unsigned_div_step3_1(newx, newy, out1, tmp, yt, i, t);
 
 		// STEP 3.3 , 3.4
 		bint_unsigned_div_step3_3(newx, newy, out1, i, t);

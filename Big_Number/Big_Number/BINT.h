@@ -8,6 +8,13 @@
 #ifndef _BINT_H_
 #define _BINT_H_
 
+/*
+#ifdef _DEBUG
+#include <crtdbg.h>
+#define malloc(s) _malloc_dbg(s,_NORMAL_BLOCK,__FILE__,__LINE__)
+#endif
+*/
+
 typedef struct  {
 	SINT	sig;	/* 1:positive,0:zero,-1:negative */
 	UWORD	*dat;
@@ -42,6 +49,8 @@ SINT bint_unsigned_compare(const BINT x, const BINT y);
 /* Value */
 SINT bint_compare(const BINT x, const BINT y);
 
+// see bit
+inline BOOL bint_seebit(const BINT x, SINT where) { if(x->len * BITSZ_WW <= where || where < 0) return 0; return ((x->dat[where / BITSZ_WW] >> (where & BITSZ_WW_1)) & 0x1); }
 
 /* Make Big Number */
 
@@ -124,4 +133,30 @@ UWORD UWORD_inv(UWORD x);
 void bint_montgomery_reduction(BINT out, const BINT m, const BINT T,const UWORD minv);
 void bint_montgomery_multiplication(BINT out, const BINT m, const BINT x, const BINT y, const UWORD minv);
 
+
+
+// headear del
+//void bint_mul_reduction_classical_test(BINT out, const BINT m, const BINT x, const BINT y);
+
+void bint_mul_reduction_classical(BINT out, const BINT m, const BINT x, const BINT y);
+void bint_sqr_reduction_classical(BINT out, const BINT m, const BINT x);
+
+void makeconst_montgomery();
+BINT M_montgomery;
+UWORD MP_montgomery;
+
+void bint_mul_reduction_montgomery(BINT out, const BINT m, const BINT x, const BINT y);
+void bint_sqr_reduction_montgomery(BINT out, const BINT m, const BINT x);
+
+void bint_rtol_exponentiation(BINT out, const BINT g, const BINT e, const BINT m, void (*mul)(BINT, const BINT, const BINT, const BINT), void (*sqr)(BINT, const BINT, const BINT));
+void bint_ltor_exponentiation(BINT out, const BINT g, const BINT e, const BINT m, void (*mul)(BINT, const BINT, const BINT, const BINT), void (*sqr)(BINT, const BINT, const BINT));
+void bint_ltor_kary_exponentiation(BINT out, const BINT g, const BINT e, const BINT m, const SINT k, void (*mul)(BINT, const BINT, const BINT, const BINT), void (*sqr)(BINT, const BINT, const BINT));
+void bint_ltor_kary_modify_exponentiation(BINT out, const BINT g, const BINT e, const BINT m, const SINT k, void (*mul)(BINT, const BINT, const BINT, const BINT), void (*sqr)(BINT, const BINT, const BINT));
+void bint_slidingwindow_exponentiation(BINT out, const BINT g, const BINT e, const BINT m, const SINT k, void (*mul)(BINT, const BINT, const BINT, const BINT), void (*sqr)(BINT, const BINT, const BINT));
+void bint_montogomery_exponentiation(BINT out, const BINT g, const BINT e, const BINT m, const UWORD mp, const BINT rm, const BINT r2m, void (*montmul)(BINT ,const BINT ,const BINT,const BINT,const UWORD));
+
+
+void bint_montmul_redmul(BINT out, const BINT m, const BINT x, const BINT y, const UWORD mp);
+void bint_montmul_redmulsqr(BINT out, const BINT m, const BINT x, const BINT y, const UWORD mp);
+void bint_montmul_montmul(BINT out, const BINT m, const BINT x, const BINT y, const UWORD mp);
 #endif
